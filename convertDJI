@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+################################################################################
+# Help                                                                         #
+################################################################################
+Help()
+{
+   # Display Help
+   echo
+   echo "This script modify DJI*.MP4 in the folder to make them compatible with GoPro Quick software"
+   echo "Files are renamed with a Q appended at the end"
+   echo
+   echo "Syntax: $0 [-r|h] folder"
+   echo "options:"
+   echo "h     Print this Help."
+   echo "r     Remove original files"
+   echo
+}
+
+
+# Get the options
+while getopts ":hr" option; do
+   case $option in
+      h) # display Help
+         Help
+         exit;;
+      r) #set remove flag
+         remove=true
+         ;;
+      \?)
+        echo "$OPTARG : invalid option"
+        exit;;
+   esac
+done
+
+shift $((OPTIND-1))
+
+FOLDER=${1?"usage: $0 folder"}
+
+for i in $FOLDER/DJI*.MP4;
+  do
+  #next line is to avoid the corner case when there is no matching files in the folder 
+  [ -e "$i" ] || continue
+
+  output=${i%.MP4}
+  ./ffmpeg -i $i -map_metadata -1 -codec copy -metadata:s handler="GoPro AVC encoder" -metadata:s handler_name=" GoPro AVC" ${output}Q.MP4
+  echo
+  echo
+  echo
+  echo "$i converted"
+  echo
+  echo 
+  if [ -n "$remove" ]
+  then
+    rm -i $i
+  fi
+done
